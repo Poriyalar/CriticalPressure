@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ΔP_crit — Critical Pressure Screening for Brine Leakage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<style>
+:root{
+  --ink:#10202b; --paper:#f6f8f8; --panel:#ffffff;
+  --brine:#0e7c86; --brine-deep:#0a5a62; --amber:#c9722e;
+  --grid:#d5dee0; --muted:#5b6b73;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.5}
+header{border-bottom:1px solid var(--grid);background:var(--panel);padding:26px 32px 22px}
+header h1{font-family:'Archivo',sans-serif;font-weight:700;font-size:1.55rem;letter-spacing:-.01em}
+header h1 .dp{color:var(--brine)}
+header p{color:var(--muted);max-width:72ch;margin-top:6px;font-size:.92rem}
+main{display:grid;grid-template-columns:330px 1fr;gap:24px;padding:24px 32px;max-width:1420px;margin:0 auto}
+@media(max-width:980px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--grid);border-radius:8px;padding:18px 20px}
+.card h2{font-family:'Archivo',sans-serif;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:12px}
+fieldset{border:0;margin:0 0 16px;padding:0}
+legend{font-family:'Archivo',sans-serif;font-weight:600;font-size:.86rem;margin-bottom:8px;color:var(--brine-deep)}
+label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:7px 0;font-size:.88rem;color:var(--ink)}
+label span.u{color:var(--muted);font-size:.78rem;min-width:52px;text-align:right}
+input[type=number]{width:110px;padding:5px 8px;border:1px solid var(--grid);border-radius:5px;font-family:var(--mono);font-size:.86rem;background:#fbfdfd;color:var(--ink)}
+input[type=number]:focus{outline:2px solid var(--brine);outline-offset:1px;border-color:var(--brine)}
+.toggle{display:flex;align-items:center;gap:8px;margin:6px 0 4px;font-size:.88rem}
+.toggle input{accent-color:var(--brine);width:16px;height:16px}
+#waterRow{display:none}
+button.calc{width:100%;margin-top:6px;padding:10px;border:0;border-radius:6px;background:var(--brine);color:#fff;font-family:'Archivo',sans-serif;font-weight:600;font-size:.95rem;cursor:pointer}
+button.calc:hover{background:var(--brine-deep)}
+button.calc:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+details.adv{margin-top:10px;border-top:1px dashed var(--grid);padding-top:8px}
+details.adv summary{font-family:'Archivo',sans-serif;font-weight:600;font-size:.84rem;color:var(--brine-deep);cursor:pointer}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;margin-bottom:18px}
+.res{border-left:4px solid var(--grid);padding-left:14px}
+.res.primary{border-left-color:var(--amber)}
+.res.secondary{border-left-color:var(--brine)}
+.res .lbl{font-size:.76rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.res .val{font-family:var(--mono);font-weight:600;font-size:1.55rem;margin:2px 0}
+.res .sub{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.explorer{border:1px solid var(--grid);border-radius:8px;background:#eef4f4;padding:14px 18px;margin-bottom:14px}
+.explorer h3{font-family:'Archivo',sans-serif;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--brine-deep);margin-bottom:12px}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 26px}
+.sl label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:2px}
+.sl label b{color:var(--ink);font-family:var(--mono);font-weight:600;float:right}
+input[type=range]{width:100%;accent-color:var(--brine);cursor:pointer}
+.plot{height:390px}
+#pProfile{height:470px;margin-bottom:6px}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--grid);margin:16px 0 14px}
+.tabs button{border:0;background:none;padding:9px 16px;font-family:'Archivo',sans-serif;font-weight:600;font-size:.88rem;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tabs button.active{color:var(--brine-deep);border-bottom-color:var(--brine)}
+.tabs button:focus-visible{outline:2px solid var(--brine);outline-offset:2px}
+.pane{display:none}
+.pane.active{display:block}
+.pane .inputsrow{display:flex;flex-wrap:wrap;gap:6px 26px;margin-bottom:10px}
+.pane .inputsrow label{margin:2px 0}
+.sensgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:1200px){.sensgrid{grid-template-columns:1fr}}
+.eq{font-family:var(--mono);font-size:.82rem;background:#eef4f4;border-radius:5px;padding:8px 10px;margin:8px 0;overflow-x:auto;white-space:nowrap}
+.note{font-size:.82rem;color:var(--muted);margin-top:10px;border-top:1px dashed var(--grid);padding-top:10px}
+.inline-res{font-family:var(--mono);font-size:.9rem;margin:8px 0;color:var(--ink)}
+.inline-res b{color:var(--amber)}
+select{padding:5px 8px;border:1px solid var(--grid);border-radius:5px;font-family:var(--mono);font-size:.84rem;background:#fbfdfd;color:var(--ink)}
+select:focus{outline:2px solid var(--brine);outline-offset:1px}
+.timectl{display:flex;align-items:center;gap:14px;margin:8px 0 4px;max-width:520px}
+.timectl b{font-family:var(--mono);font-weight:600;min-width:70px}
+.duo{display:grid;grid-template-columns:11fr 9fr;gap:16px}
+@media(max-width:1250px){.duo{grid-template-columns:1fr}}
+footer{color:var(--muted);font-size:.8rem;padding:12px 32px 28px;max-width:1420px;margin:0 auto}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="dp">ΔP<sub>crit</sub></span> · Critical pressure screening for wellbore brine leakage</h1>
+  <p>Pressure increase in a deep injection zone required to sustain flow of native brine up an open wellbore to the base of a protected shallow aquifer. Formulations of Nicot et&nbsp;al. (2009, Energy Procedia 1:47–54) as adopted in US&nbsp;EPA Class&nbsp;VI AoR guidance and Bump &amp; Hovorka (2023, IJGGC 129:103967). Brine density: Rowe &amp; Chou (1970). Brine viscosity: Kestin et&nbsp;al. (1981).</p>
+</header>
+<main>
+  <div>
+    <div class="card">
+      <h2>Inputs</h2>
+      <fieldset>
+        <legend>Geometry &amp; salinity</legend>
+        <label>Base of upper aquifer <span><input type="number" id="zu" value="495" step="50"><span class="u">m</span></span></label>
+        <label>Top of injection zone <span><input type="number" id="zi" value="1070" step="50"><span class="u">m</span></span></label>
+        <label>Upper aquifer salinity <span><input type="number" id="su" value="1000" step="1000"><span class="u">ppm</span></span></label>
+        <label>Injection zone salinity <span><input type="number" id="si" value="100000" step="1000"><span class="u">ppm</span></span></label>
+      </fieldset>
+      <fieldset>
+        <legend>Thermal &amp; pressure</legend>
+        <label>Surface / mudline temp. <span><input type="number" id="tsurf" value="20" step="1"><span class="u">°C</span></span></label>
+        <label>Geothermal gradient <span><input type="number" id="grad" value="30" step="1"><span class="u">°C/km</span></span></label>
+        <div class="toggle"><input type="checkbox" id="offshore"><label for="offshore" style="margin:0">Offshore (seawater column)</label></div>
+        <label id="waterRow">Water depth <span><input type="number" id="wd" value="100" step="10"><span class="u">m</span></span></label>
+      </fieldset>
+      <details class="adv">
+        <summary>Advanced</summary>
+        <label>Initial pressure deficit <span><input type="number" id="pdef" value="0" step="0.1"><span class="u">MPa</span></span></label>
+        <p class="note" style="margin-top:4px;border:0;padding:0">Hydrostatic P(z<sub>i</sub>) minus measured initial reservoir pressure. Positive = underpressured injection zone: the deficit must be recovered before brine can be lifted, so it adds directly to ΔP<sub>crit</sub>. Negative for overpressure.</p>
+      </details>
+      <button class="calc" id="run">Calculate ΔP<sub>crit</sub></button>
+      <p class="note">Assumes an initially hydrostatic system (integrated numerically from atmospheric at the surface using local brine density) and an open wellbore whose starting fluid grades linearly in density from the upper-aquifer fluid at z<sub>u</sub> to injection-zone brine at z<sub>i</sub>. Depths are below sea level offshore; the geothermal gradient applies below the mudline. All salinities in ppm TDS (NaCl equivalent).</p>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h2>Governing equations</h2>
+      <p class="note" style="border:0;padding:0;margin:0 0 4px"><b>Critical pressure</b> (Nicot 2009)</p>
+      <div class="eq">ξ = (ρ_i − ρ_u)/Δz &nbsp;&nbsp; λ = (ρ_i − ρ_i,u)/Δz</div>
+      <div class="eq">Fast: ΔP = ½ g ξ Δz² + ΔP_deficit</div>
+      <div class="eq">Slow: ΔP = ½ g Δz (ρ_i,u − ρ_u) + ΔP_deficit</div>
+      <p class="note" style="border:0;padding:0;margin:8px 0 4px"><b>Pressure AoR</b> (Theis / Warner &amp; Lehr 1977)</p>
+      <div class="eq">ΔP(r,t) = Qμ/(4πkh) · E₁(r²φμc_t / 4kt)</div>
+      <div class="eq">AoR: r where ΔP(r, t_end) = ΔP_crit</div>
+      <p class="note" style="border:0;padding:0;margin:8px 0 4px"><b>Wellbore leakage</b> (for ΔP_ex = ΔP_inj − ΔP_crit &gt; 0)</p>
+      <div class="eq">Darcy plug: Q_w = k_w·πr_w²·ΔP_ex/(μΔz)</div>
+      <div class="eq">Open, laminar: Q_w = πr_w⁴·ΔP_ex/(8μΔz)</div>
+      <div class="eq">Open, Re&gt;2100 (Blasius): v = [2ΔP_ex·D^1.25/(0.316·Δz·ρ^0.75·μ^0.25)]^(4/7)</div>
+      <div class="eq">Coupled: ΔP_ex = Q·R_in(t) + ΔP_wb(Q) + Q·R_out(t)</div>
+      <div class="eq">R(t) = μ·[½E₁(φμ_n c_t r_w²/4kt) + s]/(2πkh)</div>
+      <div class="eq">≡ μ·ln(r_e,eff/r_w)/(2πkh), &nbsp; r_e,eff = 1.5√(ηt)</div>
+      <p class="note" style="border:0;padding:0;margin:8px 0 4px"><b>Salinity AoR</b> (radial ADE, α_L = ε·r)</p>
+      <div class="eq">φ∂C/∂t + (Q_w/2πbr)∂C/∂r = (1/r)∂/∂r[rφ(α_L|v|+D_e)∂C/∂r]</div>
+      <div class="eq">u = r²/2,&nbsp; A = Q_w/2πbφ,&nbsp; σ = t·√(2(εA+D_e)A)</div>
+      <div class="eq">Const. Q: C = C_bg + (C₀−C_bg)·½erfc[(u−At)/√2σ]</div>
+      <div class="eq">Variable Q(t): finite-volume solve in u (van-Leer TVD)</div>
+      <p class="note">ρ_i,u = injection-zone brine density evaluated at upper-aquifer depth (T,&nbsp;P) — i.e. thermally equilibrated after being lifted. The "slow" (thermal-equilibrium) case is EPA's preferred bound for locations far from the injector; the "fast" (instantaneous pulse) case keeps the invading brine at its in-situ injection-zone density. E₁ and erfc via Abramowitz &amp; Stegun approximations. The salinity advective front sits at R(t) = √(2At).</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Results</h2>
+    <div class="results">
+      <div class="res primary"><div class="lbl">ΔP<sub>crit</sub> · thermal equilibrium</div><div class="val" id="rSlow">–</div><div class="sub" id="rSlowSub"></div></div>
+      <div class="res secondary"><div class="lbl">ΔP<sub>crit</sub> · instantaneous pulse</div><div class="val" id="rFast">–</div><div class="sub" id="rFastSub"></div></div>
+      <div class="res"><div class="lbl">Densities ρ_u / ρ_i / ρ_i,u</div><div class="val" style="font-size:1.05rem" id="rRho">–</div><div class="sub">kg/m³ (in-situ / in-situ / lifted)</div></div>
+    </div>
+    <div class="explorer">
+      <h3>Live explorer — drag to see the response</h3>
+      <div class="sliders">
+        <div class="sl"><label>Upper aquifer depth <b id="v_zu"></b></label>
+          <input type="range" id="sl_zu" min="200" max="3000" step="50" data-target="zu"></div>
+        <div class="sl"><label>Injection zone depth <b id="v_zi"></b></label>
+          <input type="range" id="sl_zi" min="1200" max="4500" step="50" data-target="zi"></div>
+        <div class="sl"><label>Upper aquifer salinity <b id="v_su"></b></label>
+          <input type="range" id="sl_su" min="500" max="200000" step="500" data-target="su"></div>
+        <div class="sl"><label>Injection zone salinity <b id="v_si"></b></label>
+          <input type="range" id="sl_si" min="10000" max="300000" step="1000" data-target="si"></div>
+      </div>
+    </div>
+    <div id="pProfile"></div>
+
+    <div class="tabs" role="tablist">
+      <button id="tab-sens" class="active" data-pane="pane-sens">Sensitivities</button>
+      <button id="tab-aor" data-pane="pane-aor">Area of Review</button>
+      <button id="tab-well" data-pane="pane-well">Wellbore model</button>
+      <button id="tab-sal" data-pane="pane-sal">Salinity AoR</button>
+      <button id="tab-salvar" data-pane="pane-salvar">Salinity AoR · var rate</button>
+    </div>
+
+    <div id="pane-sens" class="pane active">
+      <div class="sensgrid">
+        <div id="pSu" class="plot"></div>
+        <div id="pSi" class="plot"></div>
+        <div id="pGrad" class="plot"></div>
+        <div id="pTsurf" class="plot"></div>
+      </div>
+    </div>
+
+    <div id="pane-aor" class="pane">
+      <div class="inputsrow">
+        <label>Injection rate <span><input type="number" id="aQ" value="10000" step="100"><span class="u">m³/d</span></span></label>
+        <label>Permeability <span><input type="number" id="aK" value="300" step="10"><span class="u">mD</span></span></label>
+        <label>Net thickness <span><input type="number" id="aH" value="100" step="10"><span class="u">m</span></span></label>
+        <label>Porosity <span><input type="number" id="aPhi" value="0.20" step="0.01"><span class="u">–</span></span></label>
+        <label>Total compressibility <span><input type="number" id="aCt" value="5" step="0.1"><span class="u">GPa⁻¹</span></span></label>
+        <label>Duration <span><input type="number" id="aT" value="30" step="5"><span class="u">yr</span></span></label>
+      </div>
+      <div class="inline-res" id="aorRes">–</div>
+      <div class="duo"><div id="pAor" class="plot" style="height:420px"></div><div id="pAorMap" class="plot" style="height:420px"></div></div>
+      <p class="note">Theis solution, ΔP(r,t) = Qμ/(4πkh)·E₁(r²φμc<sub>t</sub>/4kt), for constant-rate injection into an infinite homogeneous single-phase aquifer (Warner &amp; Lehr 1977; Nicot 2009 §4.3). The AoR radius is where the pressure front intersects ΔP<sub>crit</sub>. Q is volumetric at reservoir conditions; brine viscosity at injection-zone T, P, S from Kestin et&nbsp;al. (1981). A multiphase reservoir model is required for accurate delineation — this is a screening estimate.</p>
+    </div>
+
+    <div id="pane-well" class="pane">
+      <div class="inputsrow">
+        <label>Mud density <span><input type="number" id="mPpg" value="9.0" step="0.1"><span class="u">ppg</span></span></label>
+        <label>Gel strength <span><input type="number" id="mGel" value="25" step="5"><span class="u">lb/100ft²</span></span></label>
+        <label>Hole diameter <span><input type="number" id="mDia" value="8.5" step="0.5"><span class="u">in</span></span></label>
+      </div>
+      <div class="inline-res" id="wellRes">–</div>
+      <div id="pWell" class="plot" style="height:420px"></div>
+      <p class="note">Comparison of the wellbore fluid assumption. <b>Open hole</b> (EPA Class VI): native brines, both bounding cases. <b>Mud-filled</b> (TCEQ Class I "Cone of Influence"; Johnston &amp; Knape 1986, per Bump &amp; Hovorka 2023 §5): drilling mud from 50 ft below surface to z<sub>i</sub> with fresh water above; ΔP<sub>crit</sub> = static mud + fresh-water column + gel resistance P<sub>gel</sub> = S<sub>G</sub>·L/(300·D) − initial reservoir pressure. Generally a higher, less conservative threshold.</p>
+    </div>
+
+    <div id="pane-sal" class="pane">
+      <div class="inputsrow">
+        <label>Wellbore / rate source <span><select id="wMode"><option value="manual" selected>Manual rate</option><option value="darcy">Darcy plug</option><option value="open">Open hole</option></select></span></label>
+        <label id="qRow">Leakage rate Q<sub>w</sub> <span><input type="number" id="sQ" value="500" step="50"><span class="u">m³/d</span></span></label>
+        <label id="rwRow" style="display:none">Well radius <span><input type="number" id="wRw" value="0.108" step="0.01"><span class="u">m</span></span></label>
+        <label id="kwRow" style="display:none">Wellbore permeability <span><input type="number" id="wKw" value="1000" step="100"><span class="u">mD</span></span></label>
+        <label id="dpRow" style="display:none">Pressure build-up ΔP<sub>inj</sub> <span><input type="number" id="sDP" value="3" step="0.5"><span class="u">bar</span></span></label>
+        <label id="cplRow" style="display:none">Couple to aquifers (Peaceman) <span><input type="checkbox" id="wCpl" checked style="width:auto"></span></label>
+      </div>
+      <div class="inputsrow" id="cplInputs" style="display:none">
+        <label>Injection aq. k<sub>i</sub> <span><input type="number" id="cKi" value="300" step="50"><span class="u">mD</span></span></label>
+        <label>Injection aq. h<sub>i</sub> <span><input type="number" id="cHi" value="100" step="10"><span class="u">m</span></span></label>
+        <label>Upper aq. k<sub>u</sub> <span><input type="number" id="cKu" value="2000" step="100"><span class="u">mD</span></span></label>
+        <label>Skin s<sub>i</sub> (injection) <span><input type="number" id="cSi" value="0" step="1"><span class="u">–</span></span></label>
+        <label>Skin s<sub>u</sub> (upper) <span><input type="number" id="cSu" value="0" step="1"><span class="u">–</span></span></label>
+        <label>Upper aq. c<sub>t,u</sub> <span><input type="number" id="cCtu" value="5" step="0.5"><span class="u">GPa⁻¹</span></span></label>
+      </div>
+      <div class="inputsrow">
+        <label>Shallow aquifer thickness <span><input type="number" id="sB" value="20" step="5"><span class="u">m</span></span></label>
+        <label>Porosity <span><input type="number" id="sPhi" value="0.20" step="0.01"><span class="u">–</span></span></label>
+        <label>Dispersivity ratio ε = α_L/r <span><input type="number" id="sEps" value="0.10" step="0.01"><span class="u">–</span></span></label>
+        <label>Diffusion D<sub>e</sub> <span><input type="number" id="sDe" value="1.0" step="0.1"><span class="u">10⁻⁹ m²/s</span></span></label>
+        <label>TDS threshold <span><input type="number" id="sTh" value="50000" step="1000"><span class="u">ppm</span></span></label>
+      </div>
+      <div class="timectl"><label for="sTime" style="margin:0">Time</label>
+        <input type="range" id="sTime" min="1" max="200" step="1" value="50" style="flex:1">
+        <b id="v_time">50 yr</b></div>
+      <div class="inline-res" id="salRes">–</div>
+      <div class="duo"><div id="pSalC" class="plot" style="height:400px"></div><div id="pSalMap" class="plot" style="height:400px"></div></div>
+      <div id="pSalAor" class="plot" style="height:340px;margin-top:8px"></div>
+      <p class="note">Constant ΔP<sub>inj</sub>. Leakage Q<sub>w</sub> = C<sub>w</sub>·(ΔP<sub>inj</sub> − ΔP<sub>crit,slow</sub>); zero below critical. Transport: vertically averaged radial advection–dispersion of TDS as a conservative tracer, with <b>scale-dependent dispersivity α<sub>L</sub> = ε·r</b> (field compilations of Gelhar et&nbsp;al. 1992 and Schulze-Makuch 2005 show α<sub>L</sub> grows ~linearly with transport distance; ε ≈ 0.1 is the classic screening value). This choice makes the mechanical dispersion coefficient constant in u = r²/2, giving a closed-form erfc solution validated against a TVD finite-volume solver (leading-edge front to &lt;1%). The salinity AoR is where TDS crosses the threshold (set it above the upper-aquifer background).<br><br>
+      <b>Caveats:</b> (1)&nbsp;Dense brine entering a lighter aquifer slumps and can finger; the vertically averaged model is justified for <i>thin</i> aquifers and overestimates lateral reach near the well otherwise — gravity-current/fingering treatment for thick aquifers is noted for future work. (2)&nbsp;Ambient groundwater flow is neglected: the plume is radially symmetric, whereas regional flow would skew it down-gradient. (3)&nbsp;With <b>Couple to aquifers</b> off, Q<sub>w</sub> ignores reservoir drawdown and the open-hole option is an upper bound; with it on (default for Darcy/open sources), a series-resistance balance — radial inflow from the injection aquifer, wellbore conduit, radial outflow into the shallow aquifer, skin on both open intervals — is solved by bisection. Each aquifer resistance is the <b>transient Theis well function</b> at the well radius, R(t) = μ[½E₁(φμ<sub>native</sub>c<sub>t</sub>r<sub>w</sub>²/4kt) + s]/(2πkh), following the semi-analytical leaky-well literature (Nordbotten et&nbsp;al. 2005; Cihan et&nbsp;al. 2011) — equivalent to an effective influence radius r<sub>e,eff</sub>(t) = 1.5√(ηt), the classic radius of investigation, so no arbitrary fixed r<sub>e</sub> is needed and time enters only logarithmically. Injection-aquifer φ, c<sub>t</sub> are taken from the Pressure AoR tab; upper-aquifer φ is the transport porosity. The outflow prefactor viscosity is the <i>leaking brine</i> at upper-aquifer (T,&nbsp;P) (the near-well region is brine-saturated after breakthrough, cf. ρ_i,u); the E₁ diffusivity uses the native fluid. Because R(t) grows, Q(t) declines slowly; the transport model uses the volume-equivalent mean rate Q̄ = (1/t)∫Q&nbsp;dt′ (quasi-steady approximation to the van Everdingen–Hurst constant-pressure solution, good to a few % after early time). Coupling is first-order for open holes (~30–40&times; rate reduction; reservoir ends carry &gt;99&nbsp;% of the pressure budget, wellbore friction negligible) and negligible for Darcy plugs. Time-varying leakage is available in the companion Julia module (<span style="font-family:var(--mono)">radial_salinity_solve</span>) and, for a piecewise rate schedule, in the <b>Salinity AoR · var rate</b> tab.</p>
+    </div>
+
+    <div id="pane-salvar" class="pane">
+      <div class="inputsrow">
+        <label>t₁ <span><input type="number" id="vT1" value="25" step="5"><span class="u">yr</span></span></label>
+        <label>Rate on [0, t₁) <span><input type="number" id="vR1" value="0" step="50"><span class="u">m³/d</span></span></label>
+        <label>t₂ <span><input type="number" id="vT2" value="50" step="5"><span class="u">yr</span></span></label>
+        <label>Rate on [t₁, t₂) <span><input type="number" id="vR2" value="200" step="50"><span class="u">m³/d</span></span></label>
+        <label>t₃ <span><input type="number" id="vT3" value="75" step="5"><span class="u">yr</span></span></label>
+        <label>Rate at t₃ <span><input type="number" id="vR3" value="0" step="50"><span class="u">m³/d</span></span></label>
+        <label>Ramp-down [t₂, t₃] <span><select id="vDecay"><option value="lin" selected>linear</option><option value="exp">exponential</option></select></span></label>
+      </div>
+      <div class="timectl"><label for="vTime" style="margin:0">Time</label>
+        <input type="range" id="vTime" min="1" max="100" step="1" value="60" style="flex:1">
+        <b id="v_vtime">60 yr</b></div>
+      <div class="inline-res" id="varRes">–</div>
+      <div id="pVarQ" class="plot" style="height:270px"></div>
+      <div class="duo" style="margin-top:8px"><div id="pVarC" class="plot" style="height:380px"></div><div id="pVarMap" class="plot" style="height:380px"></div></div>
+      <div id="pVarAor" class="plot" style="height:340px;margin-top:8px"></div>
+      <p class="note">Piecewise leakage-rate schedule: Q = R₁ on [0,&nbsp;t₁), R₂ on [t₁,&nbsp;t₂), then a ramp from R₂ to R₃ over [t₂,&nbsp;t₃] — <b>linear</b>, or <b>exponential</b> relaxation Q(t) = R₃ + (R₂−R₃)·e^(−3(t−t₂)/(t₃−t₂)) (reaches R₃ to within 5 % at t₃) — and Q = R₃ thereafter. The simulation runs 25 yr past t₃ so plume arrest and post-shut-in relaxation are visible.<br><br>
+      Because Q varies in time the closed form no longer applies; this tab runs the same van-Leer TVD finite-volume solver as the Julia <span style="font-family:var(--mono)">radial_salinity_solve</span> (u = r²/2 coordinate; Dirichlet C₀ inlet while leaking, no-flux after shut-in). Aquifer thickness, porosity, ε, D<sub>e</sub> and the TDS threshold are taken from the <b>Salinity AoR</b> tab; source/background TDS are the injection-zone/upper-aquifer salinities. Same caveats as the constant-rate tab (thin-aquifer vertical averaging; no ambient flow). Reservoir coupling does not apply on this tab: the rate schedule is prescribed directly rather than computed from a driving pressure — to get a coupled, pressure-driven Q(t), read Q̄ or Q(t) off the constant-ΔP tab (or the Julia module, which accepts <span style="font-family:var(--mono)">t_yr</span> per step) and enter it here.</p>
+    </div>
+  </div>
+</main>
+<footer>Screening-level calculation only — assumes hydrostatic initial pressure (unless a deficit is specified), open or mud-filled wellbore, no thief zones, NaCl-equivalent salinity. Not a substitute for site-specific multiphase modeling.</footer>
+
+<script>
+'use strict';
+const G = 9.80665;
+
+/* ---- Rowe & Chou (1970) brine density, kg/m3. T in K, P in MPa, S in ppm ---- */
+function rcDensity(T_K, P_MPa, ppm){
+  const T = T_K - 273.15, P = P_MPa*10.0, x = ppm*1e-6;
+  const ev = c => c[0]+T*(c[1]+T*(c[2]+T*(c[3]+T*c[4])));
+  const A=ev([1.00140,-1.46467e-5,7.13504e-6,-5.32635e-8,1.67069e-10]),
+        B=ev([4.94522e-5,-3.91427e-7,5.13254e-9,-4.06282e-11,1.25883e-13]),
+        C=ev([4.18182e-9,-1.31011e-10,2.55393e-12,-2.38318e-14,8.49071e-17]),
+        D=ev([-0.751508,-3.54162e-3,8.07721e-5,-7.23432e-7,2.14814e-9]),
+        E=ev([0.207554,6.97405e-3,-1.90566e-4,1.90042e-6,-5.98982e-9]),
+        F=ev([-1.79440e-5,3.63342e-7,-5.54145e-9,4.42397e-11,-1.32047e-13]),
+        Gc=ev([1.86791e-5,-5.93282e-7,1.15570e-8,-9.91979e-11,3.15170e-13]),
+        H=ev([3.93175e-9,-1.44299e-10,3.46824e-12,-3.71449e-14,1.39127e-16]);
+  const v = A - B*P - C*P*P + D*x + E*x*x - F*P*x - Gc*P*x*x - 0.5*H*P*P*x;
+  return 1000.0/v;
+}
+
+/* ---- Kestin et al. (1981) brine viscosity, Pa·s (Eqs 3.1–3.10) ---- */
+function kestinViscosity(T_K, P_MPa, ppm){
+  const T = T_K - 273.15, x = ppm*1e-6;
+  const M = 0.05844297;
+  const m = x<=0 ? 0 : x/(M*(1-x));
+  const mu20 = 1.002;                                   // mPa·s at 20 °C
+  const num = 20.0-T, den = 96.0+T;                     // Eq 3.5 & 3.6
+  const term = num/den*(1.23780 - 1.303e-3*num + 3.06e-6*num*num + 2.550e-8*num**3);
+  const muW = mu20*Math.pow(10,term);
+  const Am =  3.324e-2*m + 3.624e-3*m*m - 1.879e-4*m**3;   // Eq 3.3
+  const Bm = -3.960e-2*m + 1.020e-2*m*m - 7.020e-4*m**3;   // Eq 3.4
+  const mu0 = muW*Math.pow(10, Am + Bm*Math.log10(muW/mu20)); // Eq 3.2
+  const betaW = -1.297 + 5.74e-2*T - 6.97e-4*T*T + 4.47e-6*T**3 - 1.05e-8*T**4; // Eq 3.10
+  const betaE = 0.545 + 2.8e-3*T - betaW;                  // Eq 3.9
+  const mSat = 6.126 + 1.111e-2*T + 1.272e-4*T*T;          // Seidell NaCl
+  const r = m/mSat;
+  const betaStar = 2.5*r - 2.0*r*r + 0.5*r**3;             // Eq 3.8
+  const betaTot = betaE*betaStar + betaW;                  // Eq 3.7
+  return mu0*(1.0 + 0.001*betaTot*P_MPa)*1e-3;             // Eq 3.1 -> Pa·s
+}
+
+/* ---- Exponential integral E1 (Abramowitz & Stegun 5.1.53 / 5.1.56) ---- */
+function expintE1(x){
+  if(x<=1.0){
+    return -Math.log(x) + (-0.57721566 + x*(0.99999193 + x*(-0.24991055 +
+           x*(0.05519968 + x*(-0.00976004 + x*0.00107857)))));
+  }
+  const n = x**4 + 8.5733287401*x**3 + 18.059016973*x*x + 8.6347608925*x + 0.2677737343;
+  const d = x**4 + 9.5733223454*x**3 + 25.6329561486*x*x + 21.0996530827*x + 3.9584969228;
+  return Math.exp(-x)/x * n/d;
+}
+
+function tempAt(z, p){ return (p.tsurf+273.15) + p.grad*1e-3*Math.max(z-p.wd,0); }
+
+function hydroP(z, Sfun, p, dz=5){
+  let P=0.101325, zz=0;
+  while(zz<z){
+    const step=Math.min(dz,z-zz), zm=zz+0.5*step;
+    P += rcDensity(tempAt(zm,p), P, Sfun(zm))*G*step/1e6;
+    zz+=step;
+  }
+  return P;
+}
+
+function compute(p){
+  const dZ = p.zi-p.zu;
+  const Scol = z => z<=p.wd ? 35000 : z<=p.zu ? p.su : z>=p.zi ? p.si
+                  : p.su + (p.si-p.su)*(z-p.zu)/dZ;
+  const Pu=hydroP(p.zu,Scol,p), Pi=hydroP(p.zi,Scol,p);
+  const Tu=tempAt(p.zu,p), Ti=tempAt(p.zi,p);
+  const rho_u=rcDensity(Tu,Pu,p.su), rho_i=rcDensity(Ti,Pi,p.si), rho_iu=rcDensity(Tu,Pu,p.si);
+  const xi=(rho_i-rho_u)/dZ, lam=(rho_i-rho_iu)/dZ;
+  return {
+    dPfast: 0.5*G*xi*dZ*dZ/1e6 + p.pdef,
+    dPslow: G*dZ*(0.5*(lam-xi)*dZ + (rho_iu-rho_u))/1e6 + p.pdef,
+    rho_u, rho_i, rho_iu, xi, lam, Pu, Pi, Tu, Ti, dZ
+  };
+}
+
+function theisDP(r, a, mu){       // MPa
+  const Q=a.Q/86400, k=a.k*9.869233e-16, t=a.t*3.15576e7;
+  const u = r*r*a.phi*mu*(a.ct*1e-9)/(4*k*t);
+  return Q*mu/(4*Math.PI*k*a.h)*expintE1(u)/1e6;
+}
+function aorRadius(dPcrit, a, mu){
+  if(theisDP(0.1,a,mu)<=dPcrit) return 0;
+  let lo=0.1, hi=5e5;
+  if(theisDP(hi,a,mu)>=dPcrit) return Infinity;
+  for(let i=0;i<80;i++){
+    const mid=Math.sqrt(lo*hi);
+    theisDP(mid,a,mu)>dPcrit ? lo=mid : hi=mid;
+  }
+  return 0.5*(lo+hi);
+}
+
+function mudCrit(p, r, m){        // TCEQ Class I COI
+  const rhoMud = m.ppg*119.826427, fb=15.24, L=p.zi-fb;
+  const Pstatic = (1000*G*fb + rhoMud*G*L)/1e6;
+  const Pgel = m.gel*(L/0.3048)/(300*m.dia)*6.894757e-3;
+  return {dP: Pstatic + Pgel - r.Pi, Pstatic, Pgel};
+}
+
+/* ---- Salinity AoR ------------------------------------------------------- */
+/* Caveats (screening level): (1) vertically averaged radial transport —
+   gravity slumping/fingering of the dense brine is neglected, justified for
+   THIN shallow aquifers (future work: gravity-current treatment for thick
+   aquifers); (2) ambient groundwater flow neglected (radially symmetric
+   plume); (3) Q_w coupling to the aquifers is optional: uncoupled open hole
+   is an upper bound (laminar Poiseuille / Blasius above Re=2100); coupled
+   mode solves the Peaceman series-resistance balance (see wellboreQ). */
+
+function erfcAS(x){               // Abramowitz & Stegun 7.1.26, |err|<1.5e-7
+  const z=Math.abs(x), t=1/(1+0.3275911*z);
+  const y=t*(0.254829592+t*(-0.284496736+t*(1.421413741+
+          t*(-1.453152027+t*1.061405429))))*Math.exp(-z*z);
+  return x>=0 ? y : 2-y;
+}
+
+/* Reservoir coupling, Nordbotten et al. (2005)-style: the same Q must be
+   produced radially from the injection aquifer and injected radially into the
+   upper aquifer; both drawdowns act in series with the conduit,
+     dP_ex = Q*R_in(t) + dP_wb(Q) + Q*R_out(t).
+   Each aquifer resistance is the TRANSIENT Theis well function at the leaky-
+   well radius (no arbitrary influence radius; cf. Cihan et al. 2011):
+     R(t) = mu*(0.5*E1(phi*mu_native*ct*rw^2/(4*k*t)) + s)/(2*pi*k*h)
+   which via the log approximation equals ln(r_e_eff/rw)/(2pi*k*h)*mu with
+   r_e_eff(t) = 1.5*sqrt(eta*t), eta = k/(phi*mu_native*ct) — the classic
+   radius of investigation (Lee 1982). Outflow prefactor mu = invading brine
+   at upper-aquifer (T,P) (near-well region is brine-saturated after
+   breakthrough, cf. rho_i,u); E1 diffusivity uses the NATIVE fluid. h_u = b
+   (shared with transport). dP_wb linear (Darcy plug/laminar) or Blasius
+   (implicit); bisection on the monotone residual. First-order for open holes
+   (~30-40x), negligible for Darcy plugs. */
+function wellboreQ(dPexMPa, w, mu, rho, dz, cp){   // m3/s; cp = coupling or null
+  if(dPexMPa<=0) return {Q:0, regime:'below critical'};
+  const dP=dPexMPa*1e6, mD=9.869233e-16, Aw=Math.PI*w.rw*w.rw, D=2*w.rw;
+  const dPwb=Q=>{                       // wellbore dP at rate Q, + regime
+    if(w.mode==='darcy') return [Q*mu*dz/(w.kw*mD*Aw),'Darcy plug'];
+    const v=Q/Aw, Re=rho*v*D/mu;
+    if(Re<=2100) return [Q*8*mu*dz/(Math.PI*w.rw**4),'open, laminar'];
+    return [(0.316/Math.pow(Re,0.25))*(dz/D)*0.5*rho*v*v,'open, turbulent (Blasius)'];
+  };
+  if(!cp){                              // uncoupled (legacy upper bound)
+    if(w.mode==='darcy')
+      return {Q:w.kw*mD*Aw*dP/(mu*dz), regime:'Darcy plug'};
+    const Qlam=Math.PI*w.rw**4*dP/(8*mu*dz);
+    const Re=rho*(Qlam/Aw)*D/mu;
+    if(Re<=2100) return {Q:Qlam, regime:'open, laminar'};
+    const v=Math.pow(2*dP*Math.pow(D,1.25)/(0.316*dz*Math.pow(rho,0.75)*Math.pow(mu,0.25)), 4/7);
+    return {Q:v*Aw, regime:'open, turbulent (Blasius)'};
+  }
+  const etaI=cp.ki*mD/(cp.phii*cp.mui *cp.cti);   // native = injection brine
+  const etaU=cp.ku*mD/(cp.phiu*cp.munu*cp.ctu);   // native upper-aq fluid
+  const lamI=0.5*expintE1(w.rw*w.rw/(4*etaI*cp.t_s));
+  const lamU=0.5*expintE1(w.rw*w.rw/(4*etaU*cp.t_s));
+  const Rin =cp.mui*(lamI+cp.si)/(2*Math.PI*cp.ki*mD*cp.hi);
+  const Rout=cp.muu*(lamU+cp.su)/(2*Math.PI*cp.ku*mD*cp.hu);
+  let lo=0, hi=dP/(Rin+Rout);           // hi: zero-wellbore-resistance rate
+  for(let i=0;i<80;i++){
+    const mid=0.5*(lo+hi);
+    (dP - mid*(Rin+Rout) - dPwb(mid)[0]) > 0 ? lo=mid : hi=mid;
+  }
+  const Q=0.5*(lo+hi), [dpw,reg]=dPwb(Q);
+  return {Q, regime:'coupled · '+reg,
+          budget:{inflow:Q*Rin/dP, wellbore:dpw/dP, outflow:Q*Rout/dP},
+          reEffI:1.5*Math.sqrt(etaI*cp.t_s), reEffU:1.5*Math.sqrt(etaU*cp.t_s)};
+}
+
+/* Scale-dependent dispersivity alpha_L = eps*r (Gelhar et al. 1992;
+   Schulze-Makuch 2005: alpha_L grows ~linearly with transport distance,
+   eps ~ 0.1 classic screening value). With u = r^2/2 the mechanical
+   dispersion coefficient becomes constant (eps*A), giving the erfc closed
+   form below — validated against a TVD finite-volume solution. */
+function salinityC(r, t_s, s){    // ppm; s={A,eps,De,C0,Cbg}
+  const u=r*r/2, uf=s.A*t_s;
+  const sig=t_s*Math.sqrt(2*(s.eps*s.A+s.De)*s.A);
+  return s.Cbg + (s.C0-s.Cbg)*0.5*erfcAS((u-uf)/(Math.SQRT2*sig));
+}
+function salinityAorR(t_s, th, s){
+  if(s.A<=0 || salinityC(0.01,t_s,s)<=th) return 0;
+  let lo=0.01, hi=10*Math.sqrt(2*s.A*t_s)+10;
+  for(let i=0;i<60;i++){
+    const mid=0.5*(lo+hi);
+    salinityC(mid,t_s,s)>th ? lo=mid : hi=mid;
+  }
+  return 0.5*(lo+hi);
+}
+
+function params(){
+  const off=document.getElementById('offshore').checked;
+  return {
+    zu:+zu.value, zi:+zi.value, su:+su.value, si:+si.value,
+    tsurf:+tsurf.value, grad:+grad.value,
+    wd: off ? +wd.value : 0, pdef:+pdef.value
+  };
+}
+function aorParams(){
+  return {Q:+aQ.value, k:+aK.value, h:+aH.value, phi:+aPhi.value, ct:+aCt.value, t:+aT.value};
+}
+function mudParams(){ return {ppg:+mPpg.value, gel:+mGel.value, dia:+mDia.value}; }
+
+const LAYOUT = {
+  font:{family:'Inter, sans-serif', size:12, color:'#10202b'},
+  paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'#fbfdfd',
+  margin:{l:60,r:16,t:44,b:48}, hovermode:'closest',
+  legend:{orientation:'h',y:-0.18}
+};
+const CFG={displayModeBar:false,responsive:true};
+const ppm = v => Number(v).toLocaleString('en-US')+' ppm';
+
+function profilePlot(p,r){
+  const zmax=p.zi*1.15, N=120, zs=[...Array(N)].map((_,k)=>k*zmax/(N-1));
+  const curve = S => zs.map(z=>rcDensity(tempAt(z,p), hydroP(z,()=>S,p,20), S)/1000);
+  const traces=[
+    {x:curve(p.su),y:zs,name:ppm(p.su)+' parcel',line:{color:'#7fb2b8',width:1.6,dash:'dot'}},
+    {x:curve(p.si),y:zs,name:ppm(p.si)+' parcel',line:{color:'#c9722e',width:1.6,dash:'dot'}},
+    {x:[r.rho_u/1000,r.rho_i/1000],y:[p.zu,p.zi],name:'Wellbore, initial (ξ)',line:{color:'#10202b',width:3}},
+    {x:[r.rho_iu/1000,r.rho_i/1000],y:[p.zu,p.zi],name:'Wellbore, after lift (λ)',line:{color:'#0e7c86',width:3}}
+  ];
+  Plotly.newPlot('pProfile',traces,{...LAYOUT,
+    title:{text:'Wellbore density profiles before / after brine displacement',font:{family:'Archivo',size:14}},
+    xaxis:{title:'Density (g/cm³)',gridcolor:'#e3eaea',zeroline:false},
+    yaxis:{title:'Depth (m)',autorange:'reversed',gridcolor:'#e3eaea'},
+    shapes:[
+      {type:'line',x0:0,x1:1,xref:'paper',y0:p.zu,y1:p.zu,line:{color:'#5b6b73',width:1,dash:'dash'}},
+      {type:'line',x0:0,x1:1,xref:'paper',y0:p.zi,y1:p.zi,line:{color:'#5b6b73',width:1,dash:'dash'}}
+    ],
+    annotations:[
+      {x:1,xref:'paper',y:p.zu,text:'base of upper aquifer',showarrow:false,xanchor:'right',yanchor:'bottom',font:{size:10,color:'#5b6b73'}},
+      {x:1,xref:'paper',y:p.zi,text:'top of injection zone',showarrow:false,xanchor:'right',yanchor:'bottom',font:{size:10,color:'#5b6b73'}},
+      {x:(r.rho_u/1000+r.rho_iu/1000)/2,y:p.zu,text:'Δρ_top',showarrow:false,yanchor:'bottom',font:{size:11,color:'#c9722e'}}
+    ]
+  },CFG);
+}
+
+function sensPlot(div,title,xlab,xs,base,key){
+  const fast=[],slow=[];
+  xs.forEach(x=>{const q={...base,[key]:x};const r=compute(q);fast.push(r.dPfast*10);slow.push(r.dPslow*10);});
+  Plotly.newPlot(div,[
+    {x:xs,y:slow,name:'thermal equilibrium',line:{color:'#c9722e',width:2.5}},
+    {x:xs,y:fast,name:'instantaneous',line:{color:'#0e7c86',width:2.5,dash:'dash'}}
+  ],{...LAYOUT,
+    title:{text:title,font:{family:'Archivo',size:13.5}},
+    xaxis:{title:xlab,gridcolor:'#e3eaea'},
+    yaxis:{title:'ΔP_crit (bar)',gridcolor:'#e3eaea',rangemode:'tozero'}
+  },CFG);
+}
+
+function renderSens(){
+  const p=params();
+  const lin=(a,b,n)=>[...Array(n)].map((_,k)=>a+k*(b-a)/(n-1));
+  sensPlot('pSu','Sensitivity: upper aquifer salinity','Upper aquifer salinity (ppm)',lin(500,Math.min(p.si*0.9,200000),25),p,'su');
+  sensPlot('pSi','Sensitivity: injection zone salinity','Injection zone salinity (ppm)',lin(Math.max(p.su*1.1,10000),300000,25),p,'si');
+  sensPlot('pGrad','Sensitivity: geothermal gradient','Geothermal gradient (°C/km)',lin(15,50,25),p,'grad');
+  sensPlot('pTsurf','Sensitivity: surface / mudline temperature','Surface temperature (°C)',lin(0,35,25),p,'tsurf');
+}
+
+function renderAor(){
+  const p=params(), r=compute(p), a=aorParams();
+  const mu = kestinViscosity(r.Ti, r.Pi, p.si);
+  const rSlow = aorRadius(r.dPslow, a, mu), rFast = aorRadius(r.dPfast, a, mu);
+  const fkm = x => x===0?'0 (below threshold everywhere)':x===Infinity?'> 500 km':(x/1000).toFixed(1)+' km';
+  document.getElementById('aorRes').innerHTML =
+    `AoR radius: <b>${fkm(rSlow)}</b> (thermal eq.) · ${fkm(rFast)} (instantaneous) · μ_brine = ${(mu*1000).toFixed(3)} mPa·s at injection zone`;
+  const rs=[...Array(90)].map((_,k)=>Math.pow(10, Math.log10(50)+k*(Math.log10(3e5)-Math.log10(50))/89));
+  const dps=rs.map(rr=>theisDP(rr,a,mu)*10);
+  const shapes=[{type:'line',x0:50,x1:3e5,y0:r.dPslow*10,y1:r.dPslow*10,line:{color:'#c9722e',width:2,dash:'dash'}}];
+  const ann=[{x:Math.log10(70),y:r.dPslow*10,text:'ΔP_crit (thermal eq.)',showarrow:false,yanchor:'bottom',xanchor:'left',font:{size:11,color:'#c9722e'}}];
+  if(rSlow>0 && rSlow<Infinity){
+    shapes.push({type:'line',x0:rSlow,x1:rSlow,y0:0,y1:r.dPslow*10,line:{color:'#c9722e',width:1.5,dash:'dot'}});
+    ann.push({x:Math.log10(rSlow),y:0,text:'AoR',showarrow:false,yanchor:'top',font:{size:11,color:'#c9722e'}});
+  }
+  Plotly.newPlot('pAor',[
+    {x:rs,y:dps,name:'Theis ΔP(r, t_end)',line:{color:'#0e7c86',width:2.5}}
+  ],{...LAYOUT,
+    title:{text:'Pressure build-up vs distance at end of injection',font:{family:'Archivo',size:14}},
+    xaxis:{title:'Distance from injector (m)',type:'log',gridcolor:'#e3eaea'},
+    yaxis:{title:'ΔP (bar)',gridcolor:'#e3eaea',rangemode:'tozero'},
+    shapes, annotations:ann
+  },CFG);
+  const ext = (rSlow>0 && rSlow<Infinity) ? Math.max(2.2*rSlow, 2000) : 20000;
+  radialMap('pAorMap', rr=>theisDP(rr,a,mu)*10, ext,
+            (rSlow<Infinity ? rSlow : 0),
+            'Plan view: pressure build-up at t_end', 'ΔP (bar)',
+            0, Math.max(4*r.dPslow*10, 1));
+}
+
+function renderWell(){
+  const p=params(), r=compute(p), m=mudParams();
+  const mc=mudCrit(p,r,m);
+  document.getElementById('wellRes').innerHTML =
+    `Mud-filled ΔP_crit = <b>${(mc.dP*10).toFixed(2)} bar</b> (static ${mc.Pstatic.toFixed(2)} MPa + gel ${mc.Pgel.toFixed(2)} MPa − P_i ${r.Pi.toFixed(2)} MPa)`;
+  Plotly.newPlot('pWell',[{
+    type:'bar',
+    x:['Open hole · instantaneous','Open hole · thermal eq.','Mud-filled (TCEQ)'],
+    y:[r.dPfast*10, r.dPslow*10, mc.dP*10],
+    marker:{color:['#7fb2b8','#0e7c86','#c9722e']},
+    text:[r.dPfast*10, r.dPslow*10, mc.dP*10].map(v=>v.toFixed(2)+' bar'),
+    textposition:'outside'
+  }],{...LAYOUT,
+    title:{text:'ΔP_crit under different wellbore fluid assumptions',font:{family:'Archivo',size:14}},
+    yaxis:{title:'ΔP_crit (bar)',gridcolor:'#e3eaea',rangemode:'tozero'},
+    xaxis:{gridcolor:'#e3eaea'},
+    showlegend:false
+  },CFG);
+}
+
+function salParams(){
+  return {mode:wMode.value, rw:+wRw.value, kw:+wKw.value, dP:+sDP.value/10, /* MPa */
+          q:+sQ.value, b:+sB.value, phi:+sPhi.value, eps:+sEps.value, De:+sDe.value*1e-9,
+          th:+sTh.value, tyr:+sTime.value,
+          cpl:document.getElementById('wCpl').checked,
+          ki:+cKi.value, hi:+cHi.value, ku:+cKu.value,
+          si:+cSi.value, su:+cSu.value, ctu:+cCtu.value*1e-9,
+          phii:+aPhi.value, cti:+aCt.value*1e-9};
+}
+
+function renderSal(){
+  const p=params(), r=compute(p), w=salParams();
+  document.getElementById('v_time').textContent=w.tyr+' yr';
+  let Q, regime, muTxt='';
+  if(w.mode==='manual'){
+    Q=w.q/86400; regime='manual rate';
+  }else{
+    const dPex = w.dP - r.dPslow;
+    const Tm=0.5*(r.Tu+r.Ti), Pm=0.5*(r.Pu+r.Pi);
+    const mu=kestinViscosity(Tm,Pm,p.si);
+    muTxt=', μ = '+(mu*1000).toFixed(3)+' mPa·s';
+    /* Outflow prefactor: LEAKING brine at upper-aq (T,P) — near-well region is
+       brine-saturated after breakthrough (cf. rho_i,u). E1 diffusivity: native
+       upper-aq fluid. */
+    const cp = w.cpl ? {ki:w.ki, hi:w.hi, ku:w.ku, hu:w.b, si:w.si, su:w.su,
+                        phii:w.phii, cti:w.cti, phiu:w.phi, ctu:w.ctu,
+                        mui :kestinViscosity(r.Ti,r.Pi,p.si),
+                        muu :kestinViscosity(r.Tu,r.Pu,p.si),
+                        munu:kestinViscosity(r.Tu,r.Pu,p.su),
+                        t_s:w.tyr*3.15576e7} : null;
+    let budget;
+    ({Q,regime,budget}=wellboreQ(dPex,w,mu,r.rho_i,r.dZ,cp));
+    if(cp){
+      /* Q(t) declines ~logarithmically as the well functions grow; the
+         advective front depends on cumulative volume, so feed the transport
+         closed form the volume-equivalent mean rate Qbar = (1/t)∫Q dt'
+         (log-spaced trapezoid). */
+      const N=48, t0=Math.min(2.6e6, cp.t_s*1e-3);       // ~1 month floor
+      let V=0, tp=0, Qp=wellboreQ(dPex,w,mu,r.rho_i,r.dZ,{...cp,t_s:t0}).Q;
+      for(let j=0;j<=N;j++){
+        const tj=t0*Math.pow(cp.t_s/t0, j/N);
+        const Qj=wellboreQ(dPex,w,mu,r.rho_i,r.dZ,{...cp,t_s:tj}).Q;
+        V+=0.5*(Qp+Qj)*(tj-tp); tp=tj; Qp=Qj;
+      }
+      const Qbar=V/cp.t_s, {reEffI,reEffU}=wellboreQ(dPex,w,mu,r.rho_i,r.dZ,cp);
+      muTxt += ` · ΔP budget in/wb/out = ${(budget.inflow*100).toFixed(0)}/${(budget.wellbore*100).toFixed(1)}/${(budget.outflow*100).toFixed(0)} %`
+             + ` · r_e,eff(t) = ${(reEffI/1000).toFixed(1)} / ${(reEffU/1000).toFixed(1)} km`
+             + ` · Q̄(0–t) = ${(Qbar*86400).toPrecision(3)} m³/d used for transport`;
+      Q=Qbar;
+    }
+    if(Q<=0){
+      document.getElementById('salRes').innerHTML =
+        `ΔP_inj (${(w.dP*10).toFixed(1)} bar) ≤ ΔP_crit (${(r.dPslow*10).toFixed(2)} bar) — <b>no sustained leakage</b>; no salinity plume develops.`;
+      Plotly.purge('pSalC'); Plotly.purge('pSalAor');
+      document.getElementById('pSalC').innerHTML=''; document.getElementById('pSalAor').innerHTML='';
+      return;
+    }
+  }
+  const s={A:Q/(2*Math.PI*w.b*w.phi), eps:w.eps, De:w.De, C0:p.si, Cbg:p.su};
+  const t_s=w.tyr*3.15576e7;
+  const fQ=(Q*86400).toPrecision(3);
+  const Rf=Math.sqrt(2*s.A*t_s);
+  const rAor=salinityAorR(t_s,w.th,s);
+  document.getElementById('salRes').innerHTML =
+    `Q_w = <b>${fQ} m³/day</b> (${regime}${muTxt}) · advective front R = ${Rf.toFixed(0)} m · salinity AoR (${w.th.toLocaleString('en-US')} ppm) = <b>${rAor.toFixed(0)} m</b> at ${w.tyr} yr`;
+  // C(r) profile at slider time
+  const sig=t_s*Math.sqrt(2*(s.eps*s.A+s.De)*s.A);
+  const rmax=Math.max(Math.sqrt(2*(s.A*t_s+4*sig))*1.1, 2*Rf, 50);
+  const N=160, rs=[...Array(N)].map((_,k)=>0.5+k*rmax/(N-1));
+  const cs=rs.map(rr=>salinityC(rr,t_s,s));
+  const shp=[{type:'line',x0:0,x1:rmax,y0:w.th,y1:w.th,line:{color:'#c9722e',width:1.6,dash:'dash'}}];
+  const ann=[{x:rmax*0.98,y:w.th,text:'threshold',showarrow:false,xanchor:'right',yanchor:'bottom',font:{size:10,color:'#c9722e'}}];
+  if(rAor>0){shp.push({type:'line',x0:rAor,x1:rAor,y0:p.su,y1:w.th,line:{color:'#c9722e',width:1.3,dash:'dot'}});
+    ann.push({x:rAor,y:p.su,text:'salinity AoR',showarrow:false,yanchor:'top',font:{size:10,color:'#c9722e'}});}
+  Plotly.newPlot('pSalC',[
+    {x:rs,y:cs,name:'TDS(r)',line:{color:'#0e7c86',width:2.5}}
+  ],{...LAYOUT,
+    title:{text:`Shallow-aquifer TDS profile at ${w.tyr} yr`,font:{family:'Archivo',size:14}},
+    xaxis:{title:'Distance from leaky well (m)',gridcolor:'#e3eaea',rangemode:'tozero'},
+    yaxis:{title:'TDS (ppm)',gridcolor:'#e3eaea'},
+    shapes:shp, annotations:ann, showlegend:false
+  },CFG);
+  const extS=Math.max(2.2*rAor, 1.5*Rf, 100);
+  radialMap('pSalMap', rr=>salinityC(rr,t_s,s), extS, rAor,
+            `Plan view: TDS at ${w.tyr} yr`, 'TDS (ppm)', p.su, p.si);
+  // salinity AoR vs time
+  const ts=[...Array(60)].map((_,k)=>1+k*(200-1)/59);
+  const ra=ts.map(tt=>salinityAorR(tt*3.15576e7,w.th,s));
+  Plotly.newPlot('pSalAor',[
+    {x:ts,y:ra,name:'salinity AoR',line:{color:'#c9722e',width:2.5}},
+    {x:ts,y:ts.map(tt=>Math.sqrt(2*s.A*tt*3.15576e7)),name:'advective front R(t)',line:{color:'#0e7c86',width:2,dash:'dash'}}
+  ],{...LAYOUT,
+    title:{text:'Salinity AoR growth (constant ΔP_inj)',font:{family:'Archivo',size:14}},
+    xaxis:{title:'Time (yr)',gridcolor:'#e3eaea'},
+    yaxis:{title:'Radius (m)',gridcolor:'#e3eaea',rangemode:'tozero'}
+  },CFG);
+}
+
+const fmtSlider={
+  zu:v=>Number(v).toLocaleString('en-US')+' m',
+  zi:v=>Number(v).toLocaleString('en-US')+' m', su:ppm, si:ppm
+};
+function updateSliderLabels(p){
+  for(const k of ['zu','zi','su','si']){
+    document.getElementById('v_'+k).textContent = fmtSlider[k](p[k]);
+    document.getElementById('sl_'+k).value = p[k];
+  }
+  document.getElementById('sl_zi').min = p.zu + 200;
+  document.getElementById('sl_zu').max = p.zi - 200;
+}
+
+/* ---- Variable-rate salinity AoR: JS port of Julia radial_salinity_solve ----
+   Finite-volume in u = r^2/2 with van-Leer-limited upwind advection and
+   explicit diffusion. Dirichlet C0 inlet while leaking (A>0), no-flux after
+   shut-in. Snapshots stored yearly for slider scrubbing. */
+const YRS = 3.15576e7;
+
+function rateSchedule(v){         // v={t1,r1,t2,r2,t3,r3,decay}; returns t_s -> m3/s
+  return t_s=>{
+    const t=t_s/YRS;
+    let r;
+    if(t<v.t1) r=v.r1;
+    else if(t<v.t2) r=v.r2;
+    else if(t<v.t3){
+      const f=(t-v.t2)/(v.t3-v.t2);
+      r = v.decay==='exp' ? v.r3+(v.r2-v.r3)*Math.exp(-3*f) : v.r2+(v.r3-v.r2)*f;
+    }else r=v.r3;
+    return r/86400;
+  };
+}
+
+function solveVarRate(Qfun, tEnd_s, s, N=400){
+  // grid sizing from injected volume
+  let V=0; const nQ=2000, dtq=tEnd_s/nQ;
+  let Qmax=0;
+  for(let i=0;i<nQ;i++){const q=Qfun((i+0.5)*dtq); V+=q*dtq; Qmax=Math.max(Qmax,q);}
+  if(V<=0) return null;
+  const Rmax=2.5*Math.sqrt(V/(Math.PI*s.b*s.phi))+50;
+  const umax=Rmax*Rmax/2, du=umax/N;
+  let C=new Float64Array(N).fill(s.Cbg);
+  const Cn=new Float64Array(N), Cf=new Float64Array(N+1);
+  const Amax=Qmax/(2*Math.PI*s.b*s.phi), kapMax=s.eps*Amax+s.De;
+  const dtStab=Math.min(0.4*du/Math.max(Amax,1e-30), 0.2*du*du/(4*kapMax*umax));
+  const vl=x=>(x+Math.abs(x))/(1+Math.abs(x));
+  const snaps=[], snapT=[];
+  let t=0, nextSnap=YRS;
+  while(t<tEnd_s-1e-3){
+    const A=Qfun(t)/(2*Math.PI*s.b*s.phi), kap=s.eps*A+s.De;
+    const dt=Math.min(dtStab, tEnd_s-t, Math.max(nextSnap-t,1));
+    Cf[0]= A>0 ? s.C0 : C[0];
+    for(let j=0;j<N-1;j++){
+      const d2=C[j+1]-C[j];
+      const d1=j>0?C[j]-C[j-1]:d2;
+      Cf[j+1]=C[j]+0.5*(d2===0?0:vl(d1/d2))*d2;
+    }
+    Cf[N]=C[N-1];
+    for(let j=0;j<N;j++){
+      const adv=-A*(Cf[j+1]-Cf[j])/du;
+      const gL=j===0?(A>0?(C[0]-s.C0)/(0.5*du):0):(C[j]-C[j-1])/du;
+      const gR=j===N-1?0:(C[j+1]-C[j])/du;
+      Cn[j]=C[j]+dt*(adv+(2*kap*((j+1)*du)*gR-2*kap*(j*du)*gL)/du);
+    }
+    C.set(Cn); t+=dt;
+    if(t>=nextSnap-0.5){snaps.push(C.slice()); snapT.push(t); nextSnap+=YRS;}
+  }
+  const r=new Float64Array(N);
+  for(let j=0;j<N;j++) r[j]=Math.sqrt(2*(j+0.5)*du);
+  return {r, snaps, snapT};
+}
+
+function aorFromProfile(r, C, thr){
+  let idx=-1;
+  for(let j=C.length-1;j>=0;j--){ if(C[j]>thr){idx=j; break;} }
+  if(idx<0) return 0;
+  if(idx===C.length-1) return r[idx];
+  return r[idx]+(thr-C[idx])*(r[idx+1]-r[idx])/(C[idx+1]-C[idx]);
+}
+
+/* Plan-view map of a radially symmetric field (EASiTool-style), with the AoR
+   marked as a dashed white circle and the well at the centre. */
+function radialMap(div, valAt, extent_m, aorR_m, title, cbarTitle, zmin, zmax){
+  const n=81, half=extent_m;
+  const ax=[...Array(n)].map((_,i)=>(-half+2*half*i/(n-1))/1000);   // km
+  const rmin=2*half/(n-1);
+  const z=[];
+  for(let iy=0;iy<n;iy++){
+    const y=-half+2*half*iy/(n-1), row=[];
+    for(let ix=0;ix<n;ix++){
+      const x=-half+2*half*ix/(n-1);
+      row.push(valAt(Math.max(Math.hypot(x,y),rmin)));
+    }
+    z.push(row);
+  }
+  const shapes=[];
+  if(aorR_m>0 && aorR_m<half){
+    const Rk=aorR_m/1000;
+    shapes.push({type:'circle',x0:-Rk,x1:Rk,y0:-Rk,y1:Rk,
+                 line:{color:'white',width:2,dash:'dash'}});
+  }
+  Plotly.newPlot(div,[
+    {type:'heatmap',x:ax,y:ax,z,colorscale:'Jet',zmin,zmax,
+     colorbar:{title:{text:cbarTitle,side:'right'},thickness:14}},
+    {x:[0],y:[0],mode:'markers',marker:{color:'white',size:7,symbol:'circle',
+     line:{color:'#10202b',width:1.5}},hoverinfo:'skip',showlegend:false}
+  ],{...LAYOUT,margin:{l:55,r:10,t:44,b:48},
+    title:{text:title,font:{family:'Archivo',size:13.5}},
+    xaxis:{title:'X (km)',gridcolor:'rgba(0,0,0,0)',zeroline:false},
+    yaxis:{title:'Y (km)',gridcolor:'rgba(0,0,0,0)',zeroline:false,
+           scaleanchor:'x',scaleratio:1},
+    shapes, showlegend:false
+  },CFG);
+}
+
+let varCacheKey=null, varCache=null;
+function varParams(){
+  return {t1:+vT1.value, r1:+vR1.value, t2:+vT2.value, r2:+vR2.value,
+          t3:+vT3.value, r3:+vR3.value, decay:vDecay.value};
+}
+
+function renderSalVar(){
+  const p=params(), w=salParams(), v=varParams();
+  if(!(v.t1<v.t2 && v.t2<v.t3)){
+    document.getElementById('varRes').innerHTML='<b>Require t₁ &lt; t₂ &lt; t₃.</b>';
+    return;
+  }
+  const tEndYr=v.t3+25;
+  const sl=document.getElementById('vTime');
+  sl.max=tEndYr;
+  const tyr=Math.min(+sl.value,tEndYr);
+  document.getElementById('v_vtime').textContent=tyr+' yr';
+  const s={b:w.b, phi:w.phi, eps:w.eps, De:w.De, C0:p.si, Cbg:p.su};
+  const key=JSON.stringify([v,s]);
+  if(key!==varCacheKey){
+    const Qfun=rateSchedule(v);
+    varCache=solveVarRate(Qfun, tEndYr*YRS, s);
+    varCacheKey=key;
+    varCache && (varCache.Qfun=Qfun);
+  }
+  if(!varCache){
+    document.getElementById('varRes').innerHTML='All rates are zero — nothing to simulate.';
+    return;
+  }
+  const {r,snaps,snapT,Qfun}=varCache;
+  const k=Math.min(Math.max(Math.round(tyr)-1,0),snaps.length-1);
+  const C=snaps[k];
+  const rAor=aorFromProfile(r,C,w.th);
+  const aorNow=rAor.toFixed(0);
+  document.getElementById('varRes').innerHTML =
+    `Q_w(${tyr} yr) = <b>${(Qfun(tyr*YRS)*86400).toFixed(0)} m³/day</b> · salinity AoR (${w.th.toLocaleString('en-US')} ppm) = <b>${aorNow} m</b> at ${tyr} yr`;
+
+  // rate schedule
+  const tt=[...Array(240)].map((_,i)=>i*tEndYr/239);
+  Plotly.newPlot('pVarQ',[
+    {x:tt,y:tt.map(t=>Qfun(t*YRS)*86400),name:'Q_w(t)',line:{color:'#0e7c86',width:2.5}},
+    {x:[tyr,tyr],y:[0,Math.max(...tt.map(t=>Qfun(t*YRS)*86400))||1],name:'slider',mode:'lines',line:{color:'#c9722e',width:1.5,dash:'dot'}}
+  ],{...LAYOUT,margin:{l:60,r:16,t:40,b:40},
+    title:{text:'Leakage-rate schedule',font:{family:'Archivo',size:13.5}},
+    xaxis:{title:'Time (yr)',gridcolor:'#e3eaea'},
+    yaxis:{title:'Q_w (m³/day)',gridcolor:'#e3eaea',rangemode:'tozero'},
+    showlegend:false
+  },CFG);
+
+  // profile at slider time
+  const rA=Array.from(r), cA=Array.from(C);
+  const rmaxPlot=Math.max(1.2*aorFromProfile(r,snaps[snaps.length-1],p.su+0.02*(p.si-p.su)),100);
+  Plotly.newPlot('pVarC',[
+    {x:rA,y:cA,name:'TDS(r)',line:{color:'#0e7c86',width:2.5}}
+  ],{...LAYOUT,
+    title:{text:`Shallow-aquifer TDS profile at ${tyr} yr`,font:{family:'Archivo',size:14}},
+    xaxis:{title:'Distance from leaky well (m)',gridcolor:'#e3eaea',range:[0,rmaxPlot]},
+    yaxis:{title:'TDS (ppm)',gridcolor:'#e3eaea'},
+    shapes:[{type:'line',x0:0,x1:rmaxPlot,y0:w.th,y1:w.th,line:{color:'#c9722e',width:1.6,dash:'dash'}}],
+    annotations:[{x:rmaxPlot*0.98,y:w.th,text:'threshold',showarrow:false,xanchor:'right',yanchor:'bottom',font:{size:10,color:'#c9722e'}}],
+    showlegend:false
+  },CFG);
+
+  const duV=r[0]*r[0];   // u-grid spacing (r0 = sqrt(du))
+  const valAtV=rr=>{const j=Math.min(C.length-1,Math.max(0,Math.round(rr*rr/(2*duV)-0.5)));return C[j];};
+  const extV=Math.max(1.3*aorFromProfile(r,snaps[snaps.length-1],w.th), 1.2*rAor, 100);
+  radialMap('pVarMap', valAtV, extV, rAor,
+            `Plan view: TDS at ${tyr} yr`, 'TDS (ppm)', p.su, p.si);
+  // AoR growth
+  const tsY=snapT.map(t=>t/YRS);
+  const aorT=snaps.map(cc=>aorFromProfile(r,cc,w.th));
+  Plotly.newPlot('pVarAor',[
+    {x:tsY,y:aorT,name:'salinity AoR',line:{color:'#c9722e',width:2.5}},
+    {x:[tyr,tyr],y:[0,Math.max(...aorT)||1],name:'slider',mode:'lines',line:{color:'#5b6b73',width:1.5,dash:'dot'}}
+  ],{...LAYOUT,
+    title:{text:'Salinity AoR growth under the variable-rate schedule',font:{family:'Archivo',size:14}},
+    xaxis:{title:'Time (yr)',gridcolor:'#e3eaea'},
+    yaxis:{title:'Radius (m)',gridcolor:'#e3eaea',rangemode:'tozero'},
+    showlegend:false
+  },CFG);
+}
+
+let activePane='pane-sens';
+function renderActivePane(){
+  if(activePane==='pane-sens') renderSens();
+  else if(activePane==='pane-aor') renderAor();
+  else if(activePane==='pane-well') renderWell();
+  else if(activePane==='pane-sal') renderSal();
+  else renderSalVar();
+}
+
+function updateLive(){
+  const p=params();
+  if(p.zi<=p.zu){return;}
+  const r=compute(p);
+  const f=(v,d=2)=>v.toFixed(d);
+  document.getElementById('rSlow').textContent = f(r.dPslow*10)+' bar';
+  document.getElementById('rSlowSub').textContent = f(r.dPslow,3)+' MPa · '+f(r.dPslow*1e6/(r.rho_u*G),1)+' m head';
+  document.getElementById('rFast').textContent = f(r.dPfast*10)+' bar';
+  document.getElementById('rFastSub').textContent = f(r.dPfast,3)+' MPa';
+  document.getElementById('rRho').textContent = `${f(r.rho_u,1)} / ${f(r.rho_i,1)} / ${f(r.rho_iu,1)}`;
+  updateSliderLabels(p);
+  profilePlot(p,r);
+}
+
+let paneTimer=null;
+function run(){ updateLive(); clearTimeout(paneTimer); paneTimer=setTimeout(renderActivePane,250); }
+
+document.querySelectorAll('.tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(pn=>pn.classList.remove('active'));
+    btn.classList.add('active');
+    activePane=btn.dataset.pane;
+    document.getElementById(activePane).classList.add('active');
+    renderActivePane();
+  });
+});
+document.querySelectorAll('input[type=range]').forEach(sl=>{
+  sl.addEventListener('input',()=>{
+    document.getElementById(sl.dataset.target).value = sl.value;
+    run();
+  });
+});
+document.querySelectorAll('input[type=number]').forEach(el=>{
+  el.addEventListener('input',run);
+  el.addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+});
+document.getElementById('offshore').addEventListener('change',e=>{
+  document.getElementById('waterRow').style.display=e.target.checked?'flex':'none';
+  run();
+});
+document.getElementById('run').addEventListener('click',run);
+function salModeVis(){
+  const m=wMode.value;
+  document.getElementById('qRow').style.display  = m==='manual' ? 'flex' : 'none';
+  document.getElementById('rwRow').style.display = m==='manual' ? 'none' : 'flex';
+  document.getElementById('kwRow').style.display = m==='darcy'  ? 'flex' : 'none';
+  document.getElementById('dpRow').style.display = m==='manual' ? 'none' : 'flex';
+  const cpl = m!=='manual';
+  document.getElementById('cplRow').style.display = cpl ? 'flex' : 'none';
+  document.getElementById('cplInputs').style.display =
+    (cpl && document.getElementById('wCpl').checked) ? 'flex' : 'none';
+}
+document.getElementById('wMode').addEventListener('change',()=>{salModeVis(); renderSal();});
+document.getElementById('wCpl').addEventListener('change',()=>{salModeVis(); renderSal();});
+['cKi','cHi','cKu','cSi','cSu','cCtu'].forEach(id=>
+  document.getElementById(id).addEventListener('input',renderSal));
+document.getElementById('sTime').addEventListener('input',renderSal);
+document.getElementById('vTime').addEventListener('input',renderSalVar);
+document.getElementById('vDecay').addEventListener('change',renderSalVar);
+salModeVis();
+window.addEventListener('load',run);
+</script>
+</body>
+</html>
