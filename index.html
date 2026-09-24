@@ -333,15 +333,17 @@ footer{color:var(--muted);font-size:.8rem;padding-top:4px;padding-bottom:28px}
       </div>
       <div class="inputsrow" id="cplInputs" style="display:none">
         <label><span class="lt">Injection aq. k<sub>i</sub></span><span><input type="number" id="cKi" value="300" step="50"><span class="u">mD</span></span></label>
-        <label><span class="lt">Injection aq. h<sub>i</sub></span><span><input type="number" id="cHi" value="100" step="10"><span class="u">m</span></span></label>
         <label><span class="lt">Upper aq. k<sub>u</sub></span><span><input type="number" id="cKu" value="2000" step="100"><span class="u">mD</span></span></label>
+        <label><span class="lt">Injection aq. c<sub>t,i</sub></span><span><input type="number" id="cCti" value="5" step="0.5"><span class="u">GPa⁻¹</span></span></label>
+        <label><span class="lt">Upper aq. c<sub>t,u</sub></span><span><input type="number" id="cCtu" value="5" step="0.5"><span class="u">GPa⁻¹</span></span></label>
         <label><span class="lt">Skin s<sub>i</sub> (injection)</span><span><input type="number" id="cSi" value="0" step="1"><span class="u">–</span></span></label>
         <label><span class="lt">Skin s<sub>u</sub> (upper)</span><span><input type="number" id="cSu" value="0" step="1"><span class="u">–</span></span></label>
-        <label><span class="lt">Upper aq. c<sub>t,u</sub></span><span><input type="number" id="cCtu" value="5" step="0.5"><span class="u">GPa⁻¹</span></span></label>
+        <label><span class="lt">Injection aq. h<sub>i</sub></span><span><input type="number" id="cHi" value="100" step="10"><span class="u">m</span></span></label>
+        <label><span class="lt">Injection aq. porosity φ<sub>i</sub></span><span><input type="number" id="cPhiI" value="0.20" step="0.01"><span class="u">–</span></span></label>
       </div>
       <div class="inputsrow">
         <label><span class="lt">Shallow aquifer thickness</span><span><input type="number" id="sB" value="20" step="5"><span class="u">m</span></span></label>
-        <label><span class="lt">Porosity</span><span><input type="number" id="sPhi" value="0.20" step="0.01"><span class="u">–</span></span></label>
+        <label><span class="lt">Upper aq. porosity φ<sub>u</sub></span><span><input type="number" id="sPhi" value="0.20" step="0.01"><span class="u">–</span></span></label>
         <label><span class="lt">Dispersivity ratio ε = α_L/r</span><span><input type="number" id="sEps" value="0.10" step="0.01"><span class="u">–</span></span></label>
         <label><span class="lt">Diffusion D<sub>e</sub></span><span><input type="number" id="sDe" value="1.0" step="0.1"><span class="u">10⁻⁹ m²/s</span></span></label>
         <label><span class="lt">TDS threshold</span><span><input type="number" id="sTh" value="50000" step="1000"><span class="u">ppm</span></span></label>
@@ -678,7 +680,7 @@ function salParams(){
           cpl:document.getElementById('wCpl').checked,
           ki:+cKi.value, hi:+cHi.value, ku:+cKu.value,
           si:+cSi.value, su:+cSu.value, ctu:+cCtu.value*1e-9,
-          phii:+aPhi.value, cti:+aCt.value*1e-9};
+          phii:+cPhiI.value, cti:+cCti.value*1e-9};
 }
 
 /* Volume-equivalent mean rate Qbar = (1/t)*int(Q dt') up to t_s, log-spaced
@@ -1090,7 +1092,7 @@ function salModeVis(){
 }
 document.getElementById('wMode').addEventListener('change',()=>{salModeVis(); renderSal();});
 document.getElementById('wCpl').addEventListener('change',()=>{salModeVis(); renderSal();});
-['cKi','cHi','cKu','cSi','cSu','cCtu'].forEach(id=>
+['cKi','cHi','cKu','cSi','cSu','cCtu','cCti','cPhiI'].forEach(id=>
   document.getElementById(id).addEventListener('input',renderSal));
 document.getElementById('sTime').addEventListener('input',renderSal);
 document.getElementById('vTime').addEventListener('input',renderSalVar);
