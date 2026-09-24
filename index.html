@@ -224,9 +224,9 @@ footer{color:var(--muted);font-size:.8rem;padding-top:4px;padding-bottom:28px}
       <h2>Inputs</h2>
       <fieldset>
         <legend>Geometry &amp; salinity</legend>
-        <label><span class="lt">Base of upper aquifer</span><span><input type="number" id="zu" value="495" step="50"><span class="u">m</span></span></label>
+        <label><span class="lt">Base of shallow aquifer</span><span><input type="number" id="zu" value="495" step="50"><span class="u">m</span></span></label>
         <label><span class="lt">Top of injection zone</span><span><input type="number" id="zi" value="1070" step="50"><span class="u">m</span></span></label>
-        <label><span class="lt">Upper aquifer salinity</span><span><input type="number" id="su" value="1000" step="1000"><span class="u">ppm</span></span></label>
+        <label><span class="lt">shallow aquifer salinity</span><span><input type="number" id="su" value="1000" step="1000"><span class="u">ppm</span></span></label>
         <label><span class="lt">Injection zone salinity</span><span><input type="number" id="si" value="100000" step="1000"><span class="u">ppm</span></span></label>
       </fieldset>
       <fieldset>
@@ -242,7 +242,7 @@ footer{color:var(--muted);font-size:.8rem;padding-top:4px;padding-bottom:28px}
         <p class="note" style="margin-top:4px;border:0;padding:0">Hydrostatic P(z<sub>i</sub>) minus measured initial reservoir pressure. Positive = underpressured injection zone: the deficit must be recovered before brine can be lifted, so it adds directly to ΔP<sub>crit</sub>. Negative for overpressure.</p>
       </details>
       <button class="calc" id="run">Calculate ΔP<sub>crit</sub></button>
-      <p class="note">Assumes an initially hydrostatic system (integrated numerically from atmospheric at the surface using local brine density) and an open wellbore whose starting fluid grades linearly in density from the upper-aquifer fluid at z<sub>u</sub> to injection-zone brine at z<sub>i</sub>. Depths are below sea level offshore; the geothermal gradient applies below the mudline. All salinities in ppm TDS (NaCl equivalent).</p>
+      <p class="note">Assumes an initially hydrostatic system (integrated numerically from atmospheric at the surface using local brine density) and an open wellbore whose starting fluid grades linearly in density from the shallow-aquifer fluid at z<sub>u</sub> to injection-zone brine at z<sub>i</sub>. Depths are below sea level offshore; the geothermal gradient applies below the mudline. All salinities in ppm TDS (NaCl equivalent).</p>
     </div>
     <div class="card" style="margin-top:18px">
       <h2>Governing equations</h2>
@@ -265,7 +265,7 @@ footer{color:var(--muted);font-size:.8rem;padding-top:4px;padding-bottom:28px}
       <div class="eq">u = r²/2,&nbsp; A = Q_w/2πbφ,&nbsp; σ = t·√(2(εA+D_e)A)</div>
       <div class="eq">Const. Q: C = C_bg + (C₀−C_bg)·½erfc[(u−At)/√2σ]</div>
       <div class="eq">Variable Q(t): finite-volume solve in u (van-Leer TVD)</div>
-      <p class="note">ρ_i,u = injection-zone brine density evaluated at upper-aquifer depth (T,&nbsp;P) — i.e. thermally equilibrated after being lifted. The "slow" (thermal-equilibrium) case is EPA's preferred bound for locations far from the injector; the "fast" (instantaneous pulse) case keeps the invading brine at its in-situ injection-zone density. E₁ and erfc via Abramowitz &amp; Stegun approximations. The salinity advective front sits at R(t) = √(2At).</p>
+      <p class="note">ρ_i,u = injection-zone brine density evaluated at shallow-aquifer depth (T,&nbsp;P) — i.e. thermally equilibrated after being lifted. The "slow" (thermal-equilibrium) case is EPA's preferred bound for locations far from the injector; the "fast" (instantaneous pulse) case keeps the invading brine at its in-situ injection-zone density. E₁ and erfc via Abramowitz &amp; Stegun approximations. The salinity advective front sits at R(t) = √(2At).</p>
     </div>
   </div>
 
@@ -279,11 +279,11 @@ footer{color:var(--muted);font-size:.8rem;padding-top:4px;padding-bottom:28px}
     <div class="explorer">
       <h3>Live explorer — drag to see the response</h3>
       <div class="sliders">
-        <div class="sl"><label>Upper aquifer depth <b id="v_zu"></b></label>
+        <div class="sl"><label>shallow aquifer depth <b id="v_zu"></b></label>
           <input type="range" id="sl_zu" min="200" max="3000" step="50" data-target="zu"></div>
         <div class="sl"><label>Injection zone depth <b id="v_zi"></b></label>
           <input type="range" id="sl_zi" min="1200" max="4500" step="50" data-target="zi"></div>
-        <div class="sl"><label>Upper aquifer salinity <b id="v_su"></b></label>
+        <div class="sl"><label>shallow aquifer salinity <b id="v_su"></b></label>
           <input type="range" id="sl_su" min="500" max="200000" step="500" data-target="su"></div>
         <div class="sl"><label>Injection zone salinity <b id="v_si"></b></label>
           <input type="range" id="sl_si" min="10000" max="300000" step="1000" data-target="si"></div>
@@ -333,17 +333,17 @@ footer{color:var(--muted);font-size:.8rem;padding-top:4px;padding-bottom:28px}
       </div>
       <div class="inputsrow" id="cplInputs" style="display:none">
         <label><span class="lt">Injection aq. k<sub>i</sub></span><span><input type="number" id="cKi" value="300" step="50"><span class="u">mD</span></span></label>
-        <label><span class="lt">Upper aq. k<sub>u</sub></span><span><input type="number" id="cKu" value="2000" step="100"><span class="u">mD</span></span></label>
+        <label><span class="lt">shallow aq. k<sub>u</sub></span><span><input type="number" id="cKu" value="2000" step="100"><span class="u">mD</span></span></label>
         <label><span class="lt">Injection aq. c<sub>t,i</sub></span><span><input type="number" id="cCti" value="5" step="0.5"><span class="u">GPa⁻¹</span></span></label>
-        <label><span class="lt">Upper aq. c<sub>t,u</sub></span><span><input type="number" id="cCtu" value="5" step="0.5"><span class="u">GPa⁻¹</span></span></label>
+        <label><span class="lt">shallow aq. c<sub>t,u</sub></span><span><input type="number" id="cCtu" value="5" step="0.5"><span class="u">GPa⁻¹</span></span></label>
         <label><span class="lt">Skin s<sub>i</sub> (injection)</span><span><input type="number" id="cSi" value="0" step="1"><span class="u">–</span></span></label>
-        <label><span class="lt">Skin s<sub>u</sub> (upper)</span><span><input type="number" id="cSu" value="0" step="1"><span class="u">–</span></span></label>
+        <label><span class="lt">Skin s<sub>u</sub> (shallow)</span><span><input type="number" id="cSu" value="0" step="1"><span class="u">–</span></span></label>
         <label><span class="lt">Injection aq. h<sub>i</sub></span><span><input type="number" id="cHi" value="100" step="10"><span class="u">m</span></span></label>
         <label><span class="lt">Injection aq. porosity φ<sub>i</sub></span><span><input type="number" id="cPhiI" value="0.20" step="0.01"><span class="u">–</span></span></label>
       </div>
       <div class="inputsrow">
         <label><span class="lt">Shallow aquifer thickness</span><span><input type="number" id="sB" value="20" step="5"><span class="u">m</span></span></label>
-        <label><span class="lt">Upper aq. porosity φ<sub>u</sub></span><span><input type="number" id="sPhi" value="0.20" step="0.01"><span class="u">–</span></span></label>
+        <label><span class="lt">shallow aq. porosity φ<sub>u</sub></span><span><input type="number" id="sPhi" value="0.20" step="0.01"><span class="u">–</span></span></label>
         <label><span class="lt">Dispersivity ratio ε = α_L/r</span><span><input type="number" id="sEps" value="0.10" step="0.01"><span class="u">–</span></span></label>
         <label><span class="lt">Diffusion D<sub>e</sub></span><span><input type="number" id="sDe" value="1.0" step="0.1"><span class="u">10⁻⁹ m²/s</span></span></label>
         <label><span class="lt">TDS threshold</span><span><input type="number" id="sTh" value="50000" step="1000"><span class="u">ppm</span></span></label>
@@ -365,8 +365,8 @@ footer{color:var(--muted);font-size:.8rem;padding-top:4px;padding-bottom:28px}
         <p class="note" style="border:0;padding:0;margin:16px 0 4px"><b>TDS profile at several times</b> (each curve uses its own volume-equivalent Q̄ up to that time, if coupled)</p>
         <div id="pMultiT" class="plot" style="height:380px"></div>
       </div>
-      <p class="note">Constant ΔP<sub>inj</sub>. Leakage Q<sub>w</sub> = C<sub>w</sub>·(ΔP<sub>inj</sub> − ΔP<sub>crit,slow</sub>); zero below critical. Transport: vertically averaged radial advection–dispersion of TDS as a conservative tracer, with <b>scale-dependent dispersivity α<sub>L</sub> = ε·r</b> (field compilations of Gelhar et&nbsp;al. 1992 and Schulze-Makuch 2005 show α<sub>L</sub> grows ~linearly with transport distance; ε ≈ 0.1 is the classic screening value). This choice makes the mechanical dispersion coefficient constant in u = r²/2, giving a closed-form erfc solution validated against a TVD finite-volume solver (leading-edge front to &lt;1%). The salinity AoR is where TDS crosses the threshold (set it above the upper-aquifer background).<br><br>
-      <b>Caveats:</b> (1)&nbsp;Dense brine entering a lighter aquifer slumps and can finger; the vertically averaged model is justified for <i>thin</i> aquifers and overestimates lateral reach near the well otherwise — gravity-current/fingering treatment for thick aquifers is noted for future work. (2)&nbsp;Ambient groundwater flow is neglected: the plume is radially symmetric, whereas regional flow would skew it down-gradient. (3)&nbsp;With <b>Couple to aquifers</b> off, Q<sub>w</sub> ignores reservoir drawdown and the open-hole option is an upper bound; with it on (default for Darcy/open sources), a series-resistance balance — radial inflow from the injection aquifer, wellbore conduit, radial outflow into the shallow aquifer, skin on both open intervals — is solved by bisection. Each aquifer resistance is the <b>transient Theis well function</b> at the well radius, R(t) = μ[½E₁(φμ<sub>native</sub>c<sub>t</sub>r<sub>w</sub>²/4kt) + s]/(2πkh), following the semi-analytical leaky-well literature (Nordbotten et&nbsp;al. 2005; Cihan et&nbsp;al. 2011) — equivalent to an effective influence radius r<sub>e,eff</sub>(t) = 1.5√(ηt), the classic radius of investigation, so no arbitrary fixed r<sub>e</sub> is needed and time enters only logarithmically. Injection-aquifer φ, c<sub>t</sub> are taken from the Pressure AoR tab; upper-aquifer φ is the transport porosity. The outflow prefactor viscosity is the <i>leaking brine</i> at upper-aquifer (T,&nbsp;P) (the near-well region is brine-saturated after breakthrough, cf. ρ_i,u); the E₁ diffusivity uses the native fluid. Because R(t) grows, Q(t) declines slowly; the transport model uses the volume-equivalent mean rate Q̄ = (1/t)∫Q&nbsp;dt′ (quasi-steady approximation to the van Everdingen–Hurst constant-pressure solution, good to a few % after early time). Coupling is first-order for open holes (~30–40&times; rate reduction; reservoir ends carry &gt;99&nbsp;% of the pressure budget, wellbore friction negligible) and negligible for Darcy plugs. Time-varying leakage is available in the companion Julia module (<span style="font-family:var(--mono)">radial_salinity_solve</span>) and, for a piecewise rate schedule, in the <b>Salinity AoR · var rate</b> tab.</p>
+      <p class="note">Constant ΔP<sub>inj</sub>. Leakage Q<sub>w</sub> = C<sub>w</sub>·(ΔP<sub>inj</sub> − ΔP<sub>crit,slow</sub>); zero below critical. Transport: vertically averaged radial advection–dispersion of TDS as a conservative tracer, with <b>scale-dependent dispersivity α<sub>L</sub> = ε·r</b> (field compilations of Gelhar et&nbsp;al. 1992 and Schulze-Makuch 2005 show α<sub>L</sub> grows ~linearly with transport distance; ε ≈ 0.1 is the classic screening value). This choice makes the mechanical dispersion coefficient constant in u = r²/2, giving a closed-form erfc solution validated against a TVD finite-volume solver (leading-edge front to &lt;1%). The salinity AoR is where TDS crosses the threshold (set it above the shallow-aquifer background).<br><br>
+      <b>Caveats:</b> (1)&nbsp;Dense brine entering a lighter aquifer slumps and can finger; the vertically averaged model is justified for <i>thin</i> aquifers and overestimates lateral reach near the well otherwise — gravity-current/fingering treatment for thick aquifers is noted for future work. (2)&nbsp;Ambient groundwater flow is neglected: the plume is radially symmetric, whereas regional flow would skew it down-gradient. (3)&nbsp;With <b>Couple to aquifers</b> off, Q<sub>w</sub> ignores reservoir drawdown and the open-hole option is an shallow bound; with it on (default for Darcy/open sources), a series-resistance balance — radial inflow from the injection aquifer, wellbore conduit, radial outflow into the shallow aquifer, skin on both open intervals — is solved by bisection. Each aquifer resistance is the <b>transient Theis well function</b> at the well radius, R(t) = μ[½E₁(φμ<sub>native</sub>c<sub>t</sub>r<sub>w</sub>²/4kt) + s]/(2πkh), following the semi-analytical leaky-well literature (Nordbotten et&nbsp;al. 2005; Cihan et&nbsp;al. 2011) — equivalent to an effective influence radius r<sub>e,eff</sub>(t) = 1.5√(ηt), the classic radius of investigation, so no arbitrary fixed r<sub>e</sub> is needed and time enters only logarithmically. Injection-aquifer φ, c<sub>t</sub> are taken from the Pressure AoR tab; shallow-aquifer φ is the transport porosity. The outflow prefactor viscosity is the <i>leaking brine</i> at shallow-aquifer (T,&nbsp;P) (the near-well region is brine-saturated after breakthrough, cf. ρ_i,u); the E₁ diffusivity uses the native fluid. Because R(t) grows, Q(t) declines slowly; the transport model uses the volume-equivalent mean rate Q̄ = (1/t)∫Q&nbsp;dt′ (quasi-steady approximation to the van Everdingen–Hurst constant-pressure solution, good to a few % after early time). Coupling is first-order for open holes (~30–40&times; rate reduction; reservoir ends carry &gt;99&nbsp;% of the pressure budget, wellbore friction negligible) and negligible for Darcy plugs. Time-varying leakage is available in the companion Julia module (<span style="font-family:var(--mono)">radial_salinity_solve</span>) and, for a piecewise rate schedule, in the <b>Salinity AoR · var rate</b> tab.</p>
     </div>
 
     <div id="pane-salvar" class="pane">
@@ -387,7 +387,7 @@ footer{color:var(--muted);font-size:.8rem;padding-top:4px;padding-bottom:28px}
       <div class="duo" style="margin-top:8px"><div id="pVarC" class="plot" style="height:380px"></div><div id="pVarMap" class="plot" style="height:380px"></div></div>
       <div id="pVarAor" class="plot" style="height:340px;margin-top:8px"></div>
       <p class="note">Piecewise leakage-rate schedule: Q = R₁ on [0,&nbsp;t₁), R₂ on [t₁,&nbsp;t₂), then a ramp from R₂ to R₃ over [t₂,&nbsp;t₃] — <b>linear</b>, or <b>exponential</b> relaxation Q(t) = R₃ + (R₂−R₃)·e^(−3(t−t₂)/(t₃−t₂)) (reaches R₃ to within 5 % at t₃) — and Q = R₃ thereafter. The simulation runs 25 yr past t₃ so plume arrest and post-shut-in relaxation are visible.<br><br>
-      Because Q varies in time the closed form no longer applies; this tab runs the same van-Leer TVD finite-volume solver as the Julia <span style="font-family:var(--mono)">radial_salinity_solve</span> (u = r²/2 coordinate; Dirichlet C₀ inlet while leaking, no-flux after shut-in). Aquifer thickness, porosity, ε, D<sub>e</sub> and the TDS threshold are taken from the <b>Salinity AoR</b> tab; source/background TDS are the injection-zone/upper-aquifer salinities. Same caveats as the constant-rate tab (thin-aquifer vertical averaging; no ambient flow). Reservoir coupling does not apply on this tab: the rate schedule is prescribed directly rather than computed from a driving pressure — to get a coupled, pressure-driven Q(t), read Q̄ or Q(t) off the constant-ΔP tab (or the Julia module, which accepts <span style="font-family:var(--mono)">t_yr</span> per step) and enter it here.</p>
+      Because Q varies in time the closed form no longer applies; this tab runs the same van-Leer TVD finite-volume solver as the Julia <span style="font-family:var(--mono)">radial_salinity_solve</span> (u = r²/2 coordinate; Dirichlet C₀ inlet while leaking, no-flux after shut-in). Aquifer thickness, porosity, ε, D<sub>e</sub> and the TDS threshold are taken from the <b>Salinity AoR</b> tab; source/background TDS are the injection-zone/shallow-aquifer salinities. Same caveats as the constant-rate tab (thin-aquifer vertical averaging; no ambient flow). Reservoir coupling does not apply on this tab: the rate schedule is prescribed directly rather than computed from a driving pressure — to get a coupled, pressure-driven Q(t), read Q̄ or Q(t) off the constant-ΔP tab (or the Julia module, which accepts <span style="font-family:var(--mono)">t_yr</span> per step) and enter it here.</p>
     </div>
   </div>
 </main>
@@ -506,7 +506,7 @@ function erfcAS(x){               // Abramowitz & Stegun 7.1.26, |err|<1.5e-7
 
 /* Reservoir coupling, Nordbotten et al. (2005)-style: the same Q must be
    produced radially from the injection aquifer and injected radially into the
-   upper aquifer; both drawdowns act in series with the conduit,
+   shallow aquifer; both drawdowns act in series with the conduit,
      dP_ex = Q*R_in(t) + dP_wb(Q) + Q*R_out(t).
    Each aquifer resistance is the TRANSIENT Theis well function at the leaky-
    well radius (no arbitrary influence radius; cf. Cihan et al. 2011):
@@ -514,7 +514,7 @@ function erfcAS(x){               // Abramowitz & Stegun 7.1.26, |err|<1.5e-7
    which via the log approximation equals ln(r_e_eff/rw)/(2pi*k*h)*mu with
    r_e_eff(t) = 1.5*sqrt(eta*t), eta = k/(phi*mu_native*ct) — the classic
    radius of investigation (Lee 1982). Outflow prefactor mu = invading brine
-   at upper-aquifer (T,P) (near-well region is brine-saturated after
+   at shallow-aquifer (T,P) (near-well region is brine-saturated after
    breakthrough, cf. rho_i,u); E1 diffusivity uses the NATIVE fluid. h_u = b
    (shared with transport). dP_wb linear (Darcy plug/laminar) or Blasius
    (implicit); bisection on the monotone residual. First-order for open holes
@@ -538,7 +538,7 @@ function wellboreQ(dPexMPa, w, mu, rho, dz, cp){   // m3/s; cp = coupling or nul
     return {Q:v*Aw, regime:'open, turbulent (Blasius)'};
   }
   const etaI=cp.ki*mD/(cp.phii*cp.mui *cp.cti);   // native = injection brine
-  const etaU=cp.ku*mD/(cp.phiu*cp.munu*cp.ctu);   // native upper-aq fluid
+  const etaU=cp.ku*mD/(cp.phiu*cp.munu*cp.ctu);   // native shallow-aq fluid
   const lamI=0.5*expintE1(w.rw*w.rw/(4*etaI*cp.t_s));
   const lamU=0.5*expintE1(w.rw*w.rw/(4*etaU*cp.t_s));
   const Rin =cp.mui*(lamI+cp.si)/(2*Math.PI*cp.ki*mD*cp.hi);
@@ -614,7 +614,7 @@ function profilePlot(p,r){
       {type:'line',x0:0,x1:1,xref:'paper',y0:p.zi,y1:p.zi,line:{color:'#5b6b73',width:1,dash:'dash'}}
     ],
     annotations:[
-      {x:0.86,xref:'paper',y:p.zu,text:'base of upper aquifer',showarrow:false,xanchor:'right',yanchor:'bottom',font:{size:10,color:'#5b6b73'}},
+      {x:0.86,xref:'paper',y:p.zu,text:'base of shallow aquifer',showarrow:false,xanchor:'right',yanchor:'bottom',font:{size:10,color:'#5b6b73'}},
       {x:0.06,xref:'paper',y:p.zi,text:'top of injection zone',showarrow:false,xanchor:'left',yanchor:'bottom',font:{size:10,color:'#5b6b73'}},
       {x:(r.rho_u/1000+r.rho_iu/1000)/2,y:p.zu,text:'Δρ_top',showarrow:false,yanchor:'bottom',font:{size:11,color:'#c9722e'}}
     ]
@@ -637,7 +637,7 @@ function sensPlot(div,title,xlab,xs,base,key){
 function renderSens(){
   const p=params();
   const lin=(a,b,n)=>[...Array(n)].map((_,k)=>a+k*(b-a)/(n-1));
-  sensPlot('pSu','Sensitivity: upper aquifer salinity','Upper aquifer salinity (ppm)',lin(500,Math.min(p.si*0.9,200000),25),p,'su');
+  sensPlot('pSu','Sensitivity: shallow aquifer salinity','shallow aquifer salinity (ppm)',lin(500,Math.min(p.si*0.9,200000),25),p,'su');
   sensPlot('pSi','Sensitivity: injection zone salinity','Injection zone salinity (ppm)',lin(Math.max(p.su*1.1,10000),300000,25),p,'si');
   sensPlot('pGrad','Sensitivity: geothermal gradient','Geothermal gradient (°C/km)',lin(15,50,25),p,'grad');
   sensPlot('pTsurf','Sensitivity: surface / mudline temperature','Surface temperature (°C)',lin(0,35,25),p,'tsurf');
@@ -708,9 +708,9 @@ function renderSal(){
     const Tm=0.5*(r.Tu+r.Ti), Pm=0.5*(r.Pu+r.Pi);
     mu=kestinViscosity(Tm,Pm,p.si);
     muTxt=', μ = '+(mu*1000).toFixed(3)+' mPa·s';
-    /* Outflow prefactor: LEAKING brine at upper-aq (T,P) — near-well region is
+    /* Outflow prefactor: LEAKING brine at shallow-aq (T,P) — near-well region is
        brine-saturated after breakthrough (cf. rho_i,u). E1 diffusivity: native
-       upper-aq fluid. */
+       shallow-aq fluid. */
     cp = w.cpl ? {ki:w.ki, hi:w.hi, ku:w.ku, hu:w.b, si:w.si, su:w.su,
                         phii:w.phii, cti:w.cti, phiu:w.phi, ctu:w.ctu,
                         mui :kestinViscosity(r.Ti,r.Pi,p.si),
@@ -782,9 +782,9 @@ function renderSal(){
     sensWrap.style.display='';
     const lin=(a,b,n)=>[...Array(n)].map((_,k)=>a+k*(b-a)/(n-1));
     const logspace=(a,b,n)=>[...Array(n)].map((_,k)=>a*Math.pow(b/a,k/(n-1)));
-    sensPlotQ('pSensKu','Sensitivity: upper aquifer (SF) permeability','k_SF (mD)',
+    sensPlotQ('pSensKu','Sensitivity: shallow aquifer (SF) permeability','k_SF (mD)',
               logspace(Math.max(1,w.ku*0.02), w.ku*20, 30), dPex,w,mu,r.rho_i,r.dZ,cp,'ku','log');
-    sensPlotQ('pSensSu','Sensitivity: upper aquifer (SF) skin','skin, s_SF',
+    sensPlotQ('pSensSu','Sensitivity: shallow aquifer (SF) skin','skin, s_SF',
               lin(0, Math.max(10,w.su+10), 30), dPex,w,mu,r.rho_i,r.dZ,cp,'su','linear');
   } else {
     sensWrap.style.display='none';
